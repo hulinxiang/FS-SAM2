@@ -2,6 +2,7 @@ r""" Dataloader builder for few-shot semantic segmentation dataset  """
 import torch
 from torchvision.transforms import v2
 from torch.utils.data import DataLoader
+from data.coco2017_pair_online_adapter import DatasetCOCO2017PairOnline
 
 from data.pascal import DatasetPASCAL
 from data.coco import DatasetCOCO
@@ -19,6 +20,7 @@ class FSSDataset:
         cls.datasets = {
             'pascal': DatasetPASCAL,
             'coco': DatasetCOCO,
+            'coco2017p': DatasetCOCO2017PairOnline,
             'fss': DatasetFSS,
         }
 

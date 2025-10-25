@@ -76,7 +76,7 @@ def main():
     # Arguments parsing
     parser = argparse.ArgumentParser(description='FS-SAM2 Pytorch Implementation')
     parser.add_argument('--datapath', type=str, default='../datasets/')
-    parser.add_argument('--benchmark', type=str, default='pascal', choices=['pascal', 'coco', 'fss'])
+    parser.add_argument('--benchmark', type=str, default='pascal', choices=['pascal', 'coco', 'fss', 'coco2017p'])
     parser.add_argument('--exp_id', type=str, default='0000')
     parser.add_argument('--fold', type=int, default=0, choices=[0, 1, 2, 3])
     parser.add_argument('--logpath', type=str, default='')

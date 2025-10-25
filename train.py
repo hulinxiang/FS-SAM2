@@ -31,7 +31,16 @@ def train(args, epoch, sam_model, dataloader, optimizer, scheduler, training, ks
             current_out = {}
             for i in range(len(batch['support_names'])):  # accumulate previous outputs
                 current_out = sam_model(batch['support_imgs'][:, i], batch['support_masks'][:, i], prev_out=current_out)
+            # 原有：对“查询图”解码，并计算损失
             current_out, loss = sam_model(batch['query_img'], prev_out=current_out, query_mask=batch['query_mask'])
+            
+            # # 同步产出“支持图”的预测（第一张）
+            # support_out = sam_model(batch['support_imgs'][:, 0], prev_out=current_out)
+            # support_logit = support_out['logit_mask']  # 如需可视化/保存可在此使用
+
+            # # 原有：对“查询图”解码，并计算损失
+            # current_out, loss = sam_model(batch['query_img'], prev_out=current_out, query_mask=batch['query_mask'])
+
         
         logit_mask = current_out["logit_mask"]
         pred_mask = (logit_mask > 0.0).float()  # threshold
@@ -65,7 +74,7 @@ def main():
     # Arguments parsing
     parser = argparse.ArgumentParser(description='FS-SAM2 Pytorch Implementation')
     parser.add_argument('--datapath', type=str, default='../datasets/')  # CHANGE TO YOUR PATH
-    parser.add_argument('--benchmark', type=str, default='pascal', choices=['pascal', 'coco', 'fss'])
+    parser.add_argument('--benchmark', type=str, default='pascal', choices=['pascal', 'coco', 'fss', 'coco2017p'])
     parser.add_argument('--exp_id', type=str, default='0000')
     parser.add_argument('--fold', type=int, default=0, choices=[0, 1, 2, 3])
     parser.add_argument('--logpath', type=str, default='')
@@ -78,6 +87,12 @@ def main():
     parser.add_argument('--nworker', type=int, default=8, help='number of cpu threads to use during batch generation')  # 0 for Windows, 8 for Linux
     parser.add_argument('--use_ignore', type=bool, default=True, help='Boundaries are not considered during PASCAL training')
     parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--sam2_cfg', type=str,
+    default='/home/projects/u7633783/sam2/sam2/configs/sam2.1/sam2.1_hiera_t.yaml')
+    parser.add_argument('--sam2_ckpt', type=str,
+    default='/home/projects/u7633783/sam2/checkpoints/sam2.1_hiera_tiny.pt')
+
+
     args = parser.parse_args()
 
     if args.logpath == '':  # if empty, autogenerate logpath from args
@@ -110,7 +125,8 @@ def main():
 
 
     # Model initialization
-    sam_model = SAM2_pred()
+    # sam_model = SAM2_pred()
+    sam_model = SAM2_pred(model_cfg=args.sam2_cfg, checkpoint=args.sam2_ckpt)
     # sam_model.model.image_encoder.forward = torch.compile(  # compile image encoder
     #             sam_model.model.image_encoder.forward,
     #             mode="max-autotune",
@@ -196,6 +212,9 @@ def main():
             Logger.tbd_writer.add_scalars('data/fb_iou', {'trn_fb_iou': trn_fb_iou, 'val_fb_iou': val_fb_iou}, epoch)
             Logger.tbd_writer.flush()
     Logger.tbd_writer.close()
+
+    if utils.is_main_process() and hasattr(Logger, 'tbd_writer') and Logger.tbd_writer is not None:
+        Logger.tbd_writer.close()
     Logger.info('==================== Finished Training ====================')
 
     if utils.is_dist_avail_and_initialized():

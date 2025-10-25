@@ -42,15 +42,13 @@ def iou_loss(
 
 
 class SAM2_pred(nn.Module):
-    def __init__(self, benchmark=None):
+    def __init__(self, benchmark=None, model_cfg=None, checkpoint=None):
         super().__init__()
-        #self.benchmark = benchmark  # for caching
-
-        checkpoint = "./checkpoint/sam2.1_hiera_base_plus.pt"  # "sam2.1_hiera_tiny.pt"
-        model_cfg = "configs/sam2.1/sam2.1_hiera_b+.yaml"  # "..._t.yaml"
-        self.model = build_sam2(model_cfg, checkpoint)  # defaults to eval mode & sent to GPU, not compiled
-
-        # loss functions
+        if model_cfg is None:
+            model_cfg = "/home/projects/u7633783/sam2/sam2/configs/sam2.1/sam2.1_hiera_t.yaml"
+        if checkpoint is None:
+            checkpoint = "/home/projects/u7633783/sam2/checkpoints/sam2.1_hiera_tiny.pt"
+        self.model = build_sam2(model_cfg, checkpoint)
         self.cross_entropy_loss = nn.CrossEntropyLoss()
         self.bce_with_logits_loss = nn.BCEWithLogitsLoss()
 
